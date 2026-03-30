@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWAP AI Hygiene Check Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-10 font-sans">
+
+    <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-6 text-gray-800">SWAP Dashboard - AI Hygiene Audit</h1>
+        
+        <form id="uploadForm" class="space-y-4">
+            <div>
+                <label class="block font-semibold">1. Upload Selfie (Headcap Check)</label>
+                <input type="file" id="selfie" accept="image/*" required class="border p-2 w-full rounded">
+            </div>
+            <div>
+                <label class="block font-semibold">2. Upload Shoes Photo</label>
+                <input type="file" id="shoes" accept="image/*" required class="border p-2 w-full rounded">
+            </div>
+            <div>
+                <label class="block font-semibold">3. Upload Standing Area Photo</label>
+                <input type="file" id="area" accept="image/*" required class="border p-2 w-full rounded">
+            </div>
+            
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 w-full font-bold">
+                Run AI Audit
+            </button>
+        </form>
+
+        <div id="loading" class="hidden mt-6 text-blue-600 font-bold text-center animate-pulse">
+            🤖 AI is analyzing images...
+        </div>
+
+        <div id="results" class="hidden mt-6 p-4 border rounded bg-gray-50">
+            <h3 class="text-lg font-bold mb-3 border-b pb-2">Audit Results</h3>
+            <p class="mb-2"><strong>Headcap:</strong> <span id="res-headcap"></span></p>
+            <p class="mb-2"><strong>Shoes:</strong> <span id="res-shoes"></span></p>
+            <p class="mb-2"><strong>Floor Clean:</strong> <span id="res-clean"></span></p>
+            <div id="res-feedback" class="mt-4 p-3 rounded font-medium"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+
+            const formData = new FormData();
+            formData.append('selfie', document.getElementById('selfie').files[0]);
+            formData.append('shoes', document.getElementById('shoes').files[0]);
+            formData.append('area', document.getElementById('area').files[0]);
+
+            try {
+                const response = await fetch('/api/analyze-hygiene', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                const formatResult = (isValid) => isValid 
+                    ? '<span class="text-green-600 font-bold">✅ Passed</span>' 
+                    : '<span class="text-red-600 font-bold">❌ Failed</span>';
+
+                document.getElementById('res-headcap').innerHTML = formatResult(data.headcap);
+                document.getElementById('res-shoes').innerHTML = formatResult(data.shoes);
+                document.getElementById('res-clean').innerHTML = formatResult(data.clean);
+                
+                const feedbackEl = document.getElementById('res-feedback');
+                feedbackEl.innerText = data.feedback;
+                feedbackEl.className = (data.headcap && data.shoes && data.clean) 
+                    ? "mt-4 p-3 rounded font-medium bg-green-100 text-green-800" 
+                    : "mt-4 p-3 rounded font-medium bg-red-100 text-red-800";
+
+                document.getElementById('results').classList.remove('hidden');
+            } catch (error) {
+                alert("Error running AI check.");
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
